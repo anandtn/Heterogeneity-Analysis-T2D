@@ -1,0 +1,50 @@
+#### Install packages ###
+if(!requireNamespace('BiocManager',quietly = TRUE))
+  installed.packages('BiocManger')
+BiocManager::install('monocle',version='3.10')
+
+## Packages for SH
+install.packages('V:/R/3.5.1/HSMMSingleCell_1.2.0.tar.gz',repos=NULL,tupe='source')
+install.packages('monocle',repos = NULL,contriburl = 'file:V:/R/3.5.1/')
+library('monocle')
+
+## Fetch the data for DDRTree
+## data for ddrtree
+## 'pca_ext' contains 9 normalized age and sex residuzlized phenotypes
+names(pca_ext);dim(pca_ext)
+
+## Add data based on 'monocle' 
+phe_num=data.matrix(pca_ext)
+pd=new("AnnotatedDataFrame",data=data.frame(phe_num))
+input=t(phe_num)
+
+## Form the 'phe_ann'
+phe_ann=data.frame(Chr=rep(1,ncol(phe_num)),start=rep(1,ncol(phe_num)),End=rep(1,ncol(phe_num)),GeneID2=rep('NA',ncol(phe_num)),
+                   Strand=rep("+",ncol(phe_num)),base=rep("NA",ncol(phe_num)),gene_short_name=colnames(phe_num),
+                   biotype=rep('phenotype',ncol(phe_num)))
+rownames(phe_ann)=colnames(phe_num)
+fd=new("AnnotatedDataFrame",data=phe_ann)
+
+## Apply pheno data
+DIRECT<-newCellDataSet(input,phenoData = pd,featureData = fd,expressionFamily = uninormal())
+ordering_genes=colnames(phe_num)[c(1:11)] # Number of phenotypes 
+
+## Run 'dimensionality reduction' step Use reducecDimension function
+DIRECT<-setOrderingFilter(DIRECT,ordering_genes)
+DIRECT<-reduceDimension(DIRECT,max_components = 2,norm_method = "none",pseudo_expr = 0,reduction_method = "DDRTree")
+DIRECT<-orderCells(DIRECT,reverse = T)
+
+  
+########## Overlay the phenotypes #########
+plot_data_extract<-plot_cell_trajectory(DIRECT,color_by="State",show_backbone = FALSE)
+## extract the tree dimensions
+plot_data<-as.data.frame(plot_data_extract$data)
+names(plot_data)
+
+### plot continuous phenotype over tree
+ggplot(plot_data,aes(data_dim_1,data_dim_2,color=HDL))+
+  geom_point(aes(alpha=0.02,color=HDL))+
+  scale_colour_gradient2(low="green",mid='red',high="darkmagenta",midpoint = 2,name='HDL-C')+
+  ggtitle("HDL-c (mmol/L)")+xlab("dimension 1")+ylab("dimension 2")+
+  scale_alpha(guide="none")
+
