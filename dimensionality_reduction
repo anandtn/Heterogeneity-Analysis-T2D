@@ -6,7 +6,9 @@ BiocManager::install('monocle',version='3.10')
 ## Packages for SH
 install.packages('V:/R/3.5.1/HSMMSingleCell_1.2.0.tar.gz',repos=NULL,tupe='source')
 install.packages('monocle',repos = NULL,contriburl = 'file:V:/R/3.5.1/')
+
 library('monocle')
+library('ggplot2')
 
 ## Fetch the data for DDRTree
 ## data for ddrtree
